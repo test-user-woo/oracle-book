@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>랜덤 상담 북 — 오라클 v1</title>
+  <meta name="description" content="옛날 '대답해주는 책' 느낌의 무료 랜덤 상담 사이트. 질문을 적으면 카테고리/분위기별로 조언을 확률적으로 추천해줘요."/>
+  <link rel="canonical" href="https://YOUR-SITE-URL"/>
+  <meta property="og:title" content="랜덤 상담 북 — 오라클"/>
+  <meta property="og:description" content="질문을 적으면 카테고리/분위기별로 조언을 랜덤 추천!"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://YOUR-SITE-URL"/>
+  <meta property="og:image" content="https://YOUR-SITE-URL/og.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0c10; --panel:#12131a; --ink:#e8e6df; --muted:#a9acb6; --accent:#7c5cff; --accent2:#22d3ee;
+      --radius:18px; --shadow:0 10px 24px rgba(0,0,0,.35), inset 0 0 60px rgba(255,255,255,.02);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,.18), transparent 60%),
+      radial-gradient(1000px 500px at 120% 10%, rgba(34,211,238,.12), transparent 60%), var(--bg);
+      color:var(--ink);font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', Arial, sans-serif;}
+    a{color:inherit}
+    .wrap{max-width:980px;margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+    .brand{font-family:'Nanum Brush Script', cursive;font-size:38px;letter-spacing:.5px}
+    .brand .dot{color:var(--accent)}
+    .card{background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow)}
+    h1{margin:6px 0 12px;font-size:22px}
+    label{display:block;margin:10px 0 6px;color:var(--muted);font-size:14px}
+    textarea{width:100%;min-height:80px;resize:vertical;background:#0f1016;color:var(--ink);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;font:inherit}
+    select,input[type="range"]{width:100%;}
+    .row{display:grid;gap:12px;grid-template-columns:1fr}
+    @media(min-width:720px){.row{grid-template-columns:1fr 1fr}}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(135deg, rgba(124,92,255,.16), rgba(34,211,238,.12));cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .answers{display:grid;gap:12px;margin-top:14px}
+    .ans{padding:16px;border-radius:14px;background:#0f1117;border:1px solid rgba(255,255,255,.08)}
+    .tag{display:inline-block;font-size:12px;color:#0b0c10;background:linear-gradient(135deg, var(--accent), var(--accent2));padding:3px 8px;border-radius:999px;margin-right:8px}
+    .muted{color:var(--muted)}
+    .tiny{font-size:12px}
+    .flex{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">Oracle Book<span class="dot">.</span></div>
+      <div class="tiny muted">“옛날 대답해주는 책” 느낌의 무료 랜덤 상담</div>
+    </header>
+
+    <section class="card">
+      <h1>질문을 적어봐</h1>
+      <label for="q">예: "이 친구에게 고백할까?"</label>
+      <textarea id="q" placeholder="네 고민을 한 줄로 적어줘"></textarea>
+
+      <div class="row">
+        <div>
+          <label for="mode">답변 수</label>
+          <select id="mode">
+            <option value="1">한 줄 조언 (1개)</option>
+            <option value="3">3장 스프레드 (3개)</option>
+          </select>
+        </div>
+        <div>
+          <label for="vibe">분위기(성향) — 신중 ←→ 대담</label>
+          <input id="vibe" type="range" min="0" max="100" value="50"/>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label for="cat">카테고리 (자동 추천)</label>
+          <select id="cat">
+            <option value="auto" selected>자동</option>
+            <option value="love">사랑/고백</option>
+            <option value="friend">친구/인간관계</option>
+            <option value="study">공부/진로</option>
+            <option value="risk">결정/리스크</option>
+            <option value="mood">마음/자기돌봄</option>
+            <option value="general">일반</option>
+          </select>
+        </div>
+        <div class="flex" style="align-items:end">
+          <button class="btn" id="askBtn">🔮 물어보기</button>
+          <button class="btn" id="shuffleBtn" title="같은 질문에 다른 결과">🎲 다시 뽑기</button>
+        </div>
+      </div>
+
+      <div class="answers" id="answers"></div>
+      <div class="tiny muted" style="margin-top:8px">※ 실제 상담이 아닌 가벼운 조언/아이디어 제시 도구예요. 중요한 결정은 신중히, 믿을 만한 어른과 상의하기! 🙏</div>
+    </section>
+  </div>
+
+  <script>
+    // --- 데이터: 카테고리별 답변 풀 ---
+    // 각 항목: { t: '문구', k: '레이블', s: 'sentiment', w: 기본가중치 }
+    const POOL = {
+      love: [
+        {t:'고백은 타이밍이야. 다음 좋은 순간을 기다려봐.', k:'타이밍', s:'wait', w:16},
+        {t:'솔직하게, 짧고 담백하게. 해보자.', k:'고', s:'go', w:18},
+        {t:'친구로서 더 알아가는 시간을 가져.', k:'천천히', s:'slow', w:14},
+        {t:'상대가 편한 상황인지 먼저 체크!', k:'배려', s:'reflect', w:12},
+        {t:'오늘은 연습만. 내일 진짜로 말해.', k:'연습', s:'plan', w:12},
+        {t:'메시지보다 직접 눈을 보고.', k:'직접', s:'go', w:12},
+        {t:'지금 감정 점수 10점 만점 몇 점? 7 이상이면 고!', k:'자가체크', s:'go', w:10},
+        {t:'불확실하면, 가벼운 초대부터.', k:'라이트', s:'middle', w:12},
+        {t:'거절도 관계의 한 부분. 상처 대비도 계획에 넣자.', k:'안전망', s:'caution', w:10},
+        {t:'오늘은 너를 돌보는 날. 고백은 다음 기회에.', k:'셀프케어', s:'self', w:8}
+      ],
+      friend: [
+        {t:'먼저 안부를 건네봐. 작은 시작이 분위기를 바꿔.', k:'시작', s:'go', w:18},
+        {t:'대화는 사실 확인 → 감정 → 요청 순서로.', k:'구조', s:'reflect', w:16},
+        {t:'지금은 듣는 사람이 되어줘.', k:'경청', s:'slow', w:16},
+        {t:'거리를 살짝 두고 서로 쿨다운.', k:'쿨다운', s:'wait', w:12},
+        {t:'사과가 필요하다면 짧고 명확하게.', k:'사과', s:'go', w:14},
+        {t:'장난 말고 사실만. 오해를 줄여.', k:'명료', s:'caution', w:12}
+      ],
+      study: [
+        {t:'오늘 20분만 시작. 타이머 켜고 GO.', k:'작게시작', s:'go', w:20},
+        {t:'목표를 “다음 한 문제”로 줄여봐.', k:'슬라이스', s:'middle', w:16},
+        {t:'집중이 안 되면 장소를 바꿔.', k:'환경', s:'reflect', w:14},
+        {t:'휴식이 필요한 신호. 15분 리프레시.', k:'휴식', s:'self', w:12},
+        {t:'계획만 세우지 말고 5분 테스트 실행.', k:'실행', s:'go', w:16},
+        {t:'지금은 정보 수집. 결정은 내일 아침.', k:'보류', s:'wait', w:10}
+      ],
+      risk: [
+        {t:'리스크 목록 3개만 적고 시작해.', k:'리스크정리', s:'reflect', w:16},
+        {t:'작게 시도해보고 확대하자.', k:'파일럿', s:'middle', w:18},
+        {t:'오늘은 준비, 내일 실행.', k:'준비', s:'wait', w:12},
+        {t:'바로 시작! 해보면서 배워.', k:'즉시', s:'go', w:16},
+        {t:'중요한 건 안전. 보호장치 먼저.', k:'안전', s:'caution', w:14}
+      ],
+      mood: [
+        {t:'지금 마음을 10글자 메모로 적어봐.', k:'감정라벨', s:'self', w:18},
+        {t:'물 한 잔 + 3분 스트레칭.', k:'기본관리', s:'self', w:16},
+        {t:'신뢰하는 사람에게 한 문장만 공유.', k:'공유', s:'reflect', w:14},
+        {t:'오늘은 쉬어가도 돼.', k:'휴식허용', s:'wait', w:12},
+        {t:'작은 산책이 생각을 정리해줘.', k:'산책', s:'go', w:14}
+      ],
+      general: [
+        {t:'가장 쉬운 한 걸음을 먼저.', k:'첫걸음', s:'go', w:18},
+        {t:'정보를 더 모으자. 20분 리서치.', k:'리서치', s:'wait', w:12},
+        {t:'조언 2개만 더 묻고 결정.', k:'의견수집', s:'middle', w:14},
+        {t:'실수해도 괜찮아. 다시 시도하면 돼.', k:'다시', s:'self', w:14},
+        {t:'마감 시간을 정하자. 그때 결정.', k:'데드라인', s:'caution', w:12}
+      ]
+    };
+
+    // --- 간단 키워드로 카테고리 자동 추론 ---
+    const KEYWORDS = [
+      {cat:'love', keys:['고백','사랑','좋아','연애','告白','데이트','호감','썸']},
+      {cat:'friend', keys:['친구','관계','싸움','오해','화해','단톡','왕따']},
+      {cat:'study', keys:['공부','시험','숙제','진로','과제','입시','학원']},
+      {cat:'risk', keys:['결정','시도','시작','도전','리스크','위험','투자','프로젝트']},
+      {cat:'mood', keys:['우울','불안','스트레스','힘들','기분','감정','짜증','피곤']}
+    ];
+
+    // --- 가중치 추첨 유틸 ---
+    function pickWeighted(items){
+      const total = items.reduce((a,b)=>a+b.w,0);
+      let r = Math.random()*total;
+      for(const it of items){ r -= it.w; if(r<=0) return it; }
+      return items[items.length-1];
+    }
+
+    // vibe(0~100): 0=신중, 50=중립, 100=대담 → sentiment 가중치 보정
+    function applyVibeWeight(base, vibe){
+      const biasGo = (vibe-50)/50; // -1 ~ +1
+      const factor = {
+        go: 1 + 0.35*biasGo,
+        middle: 1 + 0.15*biasGo,
+        wait: 1 - 0.20*biasGo,
+        caution: 1 - 0.10*biasGo,
+        reflect: 1.0,
+        slow: 1 - 0.15*biasGo,
+        self: 1.0
+      };
+      return base.map(x=>({...x, w: Math.max(2, Math.round(x.w * (factor[x.s]||1)))}));
+    }
+
+    function detectCategory(q){
+      const text = (q||'').toLowerCase();
+      const ko = q||'';
+      for(const row of KEYWORDS){
+        if(row.keys.some(k=> ko.includes(k))) return row.cat;
+      }
+      // 간단 영문 키워드도 대응
+      if(text.includes('love')||text.includes('crush')) return 'love';
+      if(text.includes('friend')) return 'friend';
+      if(text.includes('study')||text.includes('exam')||text.includes('school')) return 'study';
+      if(text.includes('risk')||text.includes('decide')) return 'risk';
+      if(text.includes('sad')||text.includes('anx')) return 'mood';
+      return 'general';
+    }
+
+    // 답변 생성
+    function answer({q, catSel, mode, vibe}){
+      const cat = catSel==='auto' ? detectCategory(q) : catSel;
+      let bag = POOL[cat] || POOL.general;
+      bag = JSON.parse(JSON.stringify(bag)); // 복사
+      bag = applyVibeWeight(bag, vibe);
+
+      const picks = [];
+      const used = new Set();
+      const howMany = mode==='3' ? 3 : 1;
+      for(let i=0;i<howMany;i++){
+        // 동일 문구 중복 방지
+        let tries=0; let choice;
+        do{ choice = pickWeighted(bag); tries++; } while(used.has(choice.t) && tries<8);
+        used.add(choice.t);
+        // 뽑힌 항목의 가중치를 낮춰 다음 카드 다양성 확보
+        const idx = bag.findIndex(x=>x.t===choice.t);
+        if(idx>=0) bag[idx].w = Math.max(1, Math.floor(bag[idx].w/3));
+        picks.push({ ...choice, cat });
+      }
+      return {cat, picks};
+    }
+
+    // UI 연결
+    const qEl = document.getElementById('q');
+    const modeEl = document.getElementById('mode');
+    const vibeEl = document.getElementById('vibe');
+    const catEl = document.getElementById('cat');
+    const ansEl = document.getElementById('answers');
+
+    function render(res){
+      ansEl.innerHTML = '';
+      const title = {
+        love:'사랑/고백', friend:'친구/인간관계', study:'공부/진로', risk:'결정/리스크', mood:'마음/자기돌봄', general:'일반'
+      }[res.cat] || '일반';
+
+      res.picks.forEach((p,i)=>{
+        const div = document.createElement('div');
+        div.className='ans';
+        div.innerHTML = `<span class="tag">${title}</span> ${p.t}`;
+        ansEl.appendChild(div);
+      });
+    }
+
+    function run(){
+      const res = answer({
+        q: qEl.value.trim(),
+        catSel: catEl.value,
+        mode: modeEl.value,
+        vibe: Number(vibeEl.value)
+      });
+      render(res);
+    }
+
+    document.getElementById('askBtn').addEventListener('click', run);
+    document.getElementById('shuffleBtn').addEventListener('click', run);
+
+    // 초기 샘플
+    qEl.value = '이 친구에게 고백할까?';
+  </script>
+</body>
+</html>
